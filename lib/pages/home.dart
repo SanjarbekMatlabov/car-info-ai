@@ -17,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   // Explicitly define List<Widget> to avoid potential type errors
   List<Widget> _screens = [
     DashboardPage(),
-    Cameras(),
+    CarDetectionPage(),
     ProfilePage(),
   ];
   @override

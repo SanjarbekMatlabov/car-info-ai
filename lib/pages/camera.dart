@@ -1,31 +1,102 @@
-import 'package:animated_background/animated_background.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-class Cameras extends StatefulWidget {
-  const Cameras({super.key});
-
+class CarDetectionPage extends StatefulWidget {
   @override
-  State<Cameras> createState() => _CamerasState();
+  _CarDetectionPageState createState() => _CarDetectionPageState();
 }
 
-class _CamerasState extends State<Cameras> with SingleTickerProviderStateMixin {
+class _CarDetectionPageState extends State<CarDetectionPage> {
+  CameraController? _cameraController;
+  List<CameraDescription>? cameras;
+  String? carModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+    cameras = await availableCameras();
+    _cameraController = CameraController(
+      cameras![0],
+      ResolutionPreset.high,
+    );
+    await _cameraController?.initialize();
+    setState(() {});
+  }
+
+  Future<void> detectCar() async {
+    final image = await _cameraController?.takePicture();
+    if (image != null) {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://127.0.0.1:5000/detect_car'),
+      );
+      request.files.add(await http.MultipartFile.fromPath('file', image.path));
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.bytesToString();
+        final jsonData = json.decode(responseData);
+        setState(() {
+          carModel =
+              jsonData['message']; // 'model' o'rniga 'message' dan foydalaning
+        });
+      } else {
+        print("Xato: ${response.statusCode}");
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: AnimatedBackground(
-        vsync: this,
-        behaviour: RandomParticleBehaviour(
-            options: ParticleOptions(
-                spawnMaxRadius: 40,
-                spawnMinSpeed: 15,
-                particleCount: 80,
-                spawnMaxSpeed: 40,
-                baseColor: Colors.black)),
-        child: Center(
-          child: Text("data"),
-        ),
-      ),
+      appBar: AppBar(title: Text("Car Detection")),
+      body: _cameraController?.value.isInitialized ?? false
+          ? Stack(
+              children: [
+                CameraPreview(_cameraController!),
+                // Tashqarisi qorong'i bo'lgan Container
+                Positioned.fill(
+                  child: Container(
+                      // color: Colors.black.withOpacity(0.5), // Tashqarisi qorong'i
+                      ),
+                ),
+                // Ramka uchun Container
+                Center(
+                  child: Container(
+                    width: 300, // Ramka kengligi
+                    height: 400, // Ramka balandligi
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: Colors.green, width: 3), // Ramka rangi
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Mashinani old tarafini joylashtiring",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+                if (carModel != null)
+                  Center(
+                    child: Text("Model: $carModel",
+                        style: TextStyle(fontSize: 24, color: Colors.white)),
+                  ),
+              ],
+            )
+          : Center(child: CircularProgressIndicator()),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: detectCar,
+      //   child: Icon(Icons.camera),
+      // ),
     );
   }
 }

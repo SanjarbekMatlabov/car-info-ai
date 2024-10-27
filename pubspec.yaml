@@ -38,6 +38,8 @@ dependencies:
   go_router: ^14.3.0
   curved_navigation_bar: ^1.0.6
   animated_background: ^2.0.0
+  camera: ^0.10.0+1
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
