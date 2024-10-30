@@ -56,7 +56,6 @@ class _CarDetectionPageState extends State<CarDetectionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Car Detection")),
       body: _cameraController?.value.isInitialized ?? false
           ? Stack(
               children: [
@@ -85,6 +84,18 @@ class _CarDetectionPageState extends State<CarDetectionPage> {
                     ),
                   ),
                 ),
+                Positioned(
+                    bottom: 10,
+                    right: 0,
+                    left: 0,
+                    child: Container(
+                      child: IconButton(
+                          onPressed: detectCar,
+                          icon: Icon(
+                            Icons.camera,
+                            size: 40,
+                          )),
+                    )),
                 if (carModel != null)
                   Center(
                     child: Text("Model: $carModel",
